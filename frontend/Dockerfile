@@ -1,5 +1,5 @@
-# Use the official Node.js image as a base
-FROM node:20.0-alpine
+# Stage 1: Build the application
+FROM node:20.0-alpine as builder
 
 # Set the working directory
 WORKDIR /app
@@ -10,11 +10,20 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy the rest of your application code
+# Copy the rest of the application code
 COPY . .
 
-# Expose the port the app runs on
-EXPOSE 3000
+# Build the application (assumes a build script in package.json)
+RUN npm run build
 
-# Command to run your ap
-CMD ["npm", "start"]
+# Stage 2: Serve the application with Nginx
+FROM nginx:stable-alpine
+
+# Copy the build output to Nginx's web directory
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Expose the Nginx port
+EXPOSE 80
+
+# Start Nginx server
+CMD ["nginx", "-g", "daemon off;"]
