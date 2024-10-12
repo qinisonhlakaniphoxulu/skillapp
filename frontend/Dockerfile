@@ -1,29 +1,25 @@
 # Stage 1: Build the application
 FROM node:20.0-alpine as builder
 
-# Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package.json and install dependencies
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
-# Build the application (assumes a build script in package.json)
+# Build the application
 RUN npm run build
 
-# Stage 2: Serve the application with Nginx
+# Stage 2: Use Nginx to serve the built application
 FROM nginx:stable-alpine
 
-# Copy the build output to Nginx's web directory
+# Copy build files from the builder stage to Nginx's default directory
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose the Nginx port
+# Expose Nginx port
 EXPOSE 80
 
-# Start Nginx server
 CMD ["nginx", "-g", "daemon off;"]
